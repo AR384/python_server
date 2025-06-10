@@ -24,6 +24,9 @@ class ImageInference:
         results = self.model.predict(
             img,
             conf=0.5,
+            imgsz=(640,480),
+            device='cuda:0',
+            max_det=10,
             retina_masks=True,
             )
         
