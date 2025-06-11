@@ -52,3 +52,6 @@ class ImageInference:
         logger.info('추론완료 및 결과 저장됨')
         # tmp 파일 삭제
         
+        logger = logging.getLogger("[ ImageInference - Inferenc-predict() ]")
+        logger.info('추론완료 및 결과 저장됨')
+        # tmp 파일 삭제
