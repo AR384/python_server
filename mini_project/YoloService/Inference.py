@@ -24,11 +24,12 @@ class ImageInference:
         
     
     def Sequence(self,img_path,job_id):
+        self.logger.info('시퀀스 시작')
         self.__predict(img_path,job_id)
         self.__result_IMG_saving_coverting(img_path)
         self.__result_sorting()
         self.__result_push(job_id,)
-        self.logger.info('추론완료 및 결과 저장됨')
+        self.logger.info('시퀀스 종료')
     
     def __predict(self,img_path,job_id):
         img = self.ips.resize(img_path,480)
