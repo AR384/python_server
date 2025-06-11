@@ -35,12 +35,15 @@ class ImageInference:
         
         print('save_file',save_file)
         print('img_path',img_path)
+        
         #이미지 결과 저장
         for i, result in enumerate(results):
             im_plot = result.plot()
             cv2.imwrite(str(save_file), im_plot)
+            
         #이미지 json형태로 전환  
         b64_img = self.pps.image_to_JSON(save_file)
+        
         #전역변수에 값 저장
         self.results_store[job_id] = {
             "message":'추론완료',
@@ -48,10 +51,7 @@ class ImageInference:
             "image_base64": f"data:image/jpeg;base64,{b64_img}",
             "status": "done"
         }
-        logger = logging.getLogger("Inferenc-predict()")
-        logger.info('추론완료 및 결과 저장됨')
-        # tmp 파일 삭제
         
-        logger = logging.getLogger("[ ImageInference - Inferenc-predict() ]")
+        logger = logging.getLogger("Inferenc-predict()")
         logger.info('추론완료 및 결과 저장됨')
         # tmp 파일 삭제
