@@ -1,15 +1,17 @@
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI, File, UploadFile, BackgroundTasks
 from YoloService import Inference,PreProcessing,PostProcessing
-
-import base64
+from pydantic import BaseModel
 import uuid
 import logging
 
+class Recieve(BaseModel):
+    itemIdx : list
 
 app = FastAPI()
 
 results = {}
+final_result = {}
 # 결과 저장용 임시 메모리 저장 (실제로는 Redis나 DB를 추천) 
 # 전송 next->spring->python  
 # python ->db ->spring-> next?
@@ -18,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 
 ips = PreProcessing.ImageProcessor()
 inf = Inference.ImageInference(results_store=results)
-pps = PostProcessing.PostProcessing()
+pps = PostProcessing.PostProcessing(final_result)
 logger = logging.getLogger("[ APP ]" )
 
 @app.post("/resize") #함수 인자는 뒤에 써야함
@@ -37,3 +39,14 @@ async def get_result(job_id:str):
         logger.info("job_id not in results: 데이터를 찾을 수 없음")
         return JSONResponse(status_code=404,content={"message":"[ FastAPI ] 작업아이디를 찾을 수 없습니다"})
     return results[job_id]
+
+@app.post('/userselect/{job_id}')
+async def users_selected(job_id:str, body:Recieve ,background_tasks:BackgroundTasks):
+    if job_id not in results:
+        logger.info("job_id not in results: 데이터를 찾을 수 없음")
+    background_tasks.add_task(pps.user_selected_img,results,job_id,final_result)
+    return JSONResponse(content={"message": "[ FastAPI ]  데이터 수신 완료", "requestBody": body ,'jobid':job_id})
+
+@app.get('/final-result')
+async def final_sending():
+    pass
