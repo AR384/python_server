@@ -54,5 +54,5 @@ class ImageProcessor:
         simplified = polygon.simplify(tolerance, preserve_topology=True)
         return list(simplified.exterior.coords)
     
-    def redraw_mask(self):
-        pass
+    def redraw_mask(self,results,jobid):
+        product = results[jobid]
