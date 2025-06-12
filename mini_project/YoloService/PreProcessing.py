@@ -3,7 +3,7 @@ import PIL
 import numpy as np
 import logging
 import imutils
-
+from shapely.geometry import Polygon
 from pathlib import Path
 
 class ImageProcessor:
@@ -46,3 +46,13 @@ class ImageProcessor:
         # img = cv2.imdecode(nparr,cv2.IMREAD_COLOR)
         resized_img = imutils.resize(img, height=w)
         return resized_img
+    
+    def simplify_polygon(self,coords, tolerance=2.0):
+        polygon = Polygon(coords)
+        if not polygon.is_valid:
+            polygon = polygon.buffer(0)  # Invalid geometry fix
+        simplified = polygon.simplify(tolerance, preserve_topology=True)
+        return list(simplified.exterior.coords)
+    
+    def redraw_mask(self):
+        pass

@@ -1,6 +1,6 @@
 from fastapi.responses import JSONResponse
 from fastapi import FastAPI, File, UploadFile, BackgroundTasks
-from YoloService import Inference,PreProcessing
+from YoloService import Inference,PreProcessing,PostProcessing
 
 import base64
 import uuid
@@ -18,6 +18,7 @@ logging.basicConfig(level=logging.INFO)
 
 ips = PreProcessing.ImageProcessor()
 inf = Inference.ImageInference(results_store=results)
+pps = PostProcessing.PostProcessing()
 logger = logging.getLogger("[ APP ]" )
 
 @app.post("/resize") #함수 인자는 뒤에 써야함

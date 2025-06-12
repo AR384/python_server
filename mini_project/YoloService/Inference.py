@@ -6,7 +6,7 @@ from YoloService import PostProcessing,PreProcessing
 from pathlib import Path
 import os
 import logging
-
+from shapely.geometry import Polygon
 
 class ImageInference:
     def __init__(self,results_store):
@@ -21,6 +21,8 @@ class ImageInference:
         self.inference_result =Results
         self.b64_img = ""
         self.save_file =""
+        self.pointlist = []
+        self.pred_name = []
         
     
     def Sequence(self,img_path,job_id):
@@ -58,6 +60,22 @@ class ImageInference:
         self.logger.info('이미지 저장 및 json인코딩 완료')
     
     def __result_sorting(self):
+        #전체 레이블 생성
+        labels = self.inference_result[0].names
+        for _,result in enumerate(self.inference_result):
+            #인식된 레이블 리스트 플롯
+            classified_names = result.boxes.cls.cpu().numpy()
+            #익식된 레이블의 폴리곤 만 추출
+            mask_coordinate = result.masks.xy
+            #레이블에서 값을 받아서 str 리스트로 저장
+            for i in classified_names:
+                self.pred_name.append(labels[int(i)])
+            #레이블 별 폴리곤으로 리스트 생성
+            for poly in mask_coordinate:
+                simplified_poly = self.ips.simplify_polygon(poly,tolerance=2.0)
+                point_str = " ".join(f'{int(x)},{int(y)}' for x,y in simplified_poly)
+                self.pointlist.append(point_str)
+            
         self.logger.info('결과 정리 완료')
     
     def __result_push(self,job_id):
@@ -66,7 +84,9 @@ class ImageInference:
             "message":'추론완료',
             'file': f'{self.save_file}',
             "image_base64": f"data:image/jpeg;base64,{self.b64_img}",
-            "status": "done"
+            "status": "done",
+            "poly": self.pointlist,
+            "names":self.pred_name
         }
         self.logger.info('데이터 저장 완료')
     
