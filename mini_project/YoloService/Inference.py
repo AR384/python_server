@@ -24,19 +24,18 @@ class ImageInference:
         self.pointlist = []
         self.pred_name = []
         
-    def Sequence(self,img_path,job_id):
-        self.logger.info('시퀀스 시작')
+    def sequence(self,img_path,job_id):
+        self.logger.info('sequence - 시퀀스 시작')
         self.__predict(img_path,job_id)
         self.__result_IMG_saving_coverting(img_path)
         self.__result_sorting(job_id)
         self.__result_push(job_id,)
-        self.logger.info(f'Jo_id{job_id}')
-        self.logger.info('시퀀스 종료')
+        self.logger.info(f'Jo_id ==={job_id}')
+        self.logger.info('sequence - 시퀀스 종료')
     
     def __predict(self,img_path,job_id):
-        img = self.ips.resize(img_path,480)
         results = self.model.predict(
-            img,
+            img_path,
             conf=0.5,
             imgsz=(640,480),
             device='cuda:0',
@@ -44,20 +43,20 @@ class ImageInference:
             retina_masks=True,
         )
         self.inference_result=results
-        self.logger.info('추론완료')
+        self.logger.info('__predict - 추론완료')
 
     def __result_IMG_saving_coverting(self,img_path):
-        filename = str(img_path).replace('tmp','result')
+        filename = str(img_path).replace('display','result')
         self.save_file = str(self.save_path / filename) 
         print('save_file : ',self.save_file)
         print('img_path : ',img_path)
-        #이미지 결과 저장
+        #결과 이미지 저장
         for i, result in enumerate(self.inference_result):
             im_plot = result.plot()
             cv2.imwrite(self.save_file, im_plot)
-        #이미지 json형태로 전환  
-        self.b64_img = self.pps.image_to_JSON(self.save_file)
-        self.logger.info('이미지 저장 및 json인코딩 완료')
+        #display이미지 json형태로 전환  
+        self.b64_img = self.pps.image_to_JSON(img_path)
+        self.logger.info('__result_IMG_saving_coverting - 이미지 저장 및 json인코딩 완료')
     
     def __result_sorting(self,job_id):
         #리스트에 작업이 없을 경우 작업
@@ -78,7 +77,7 @@ class ImageInference:
                     point_str = " ".join(f'{int(x)},{int(y)}' for x,y in simplified_poly)
                     self.pointlist.append(point_str)
                 
-            self.logger.info('결과 정리 완료')
+            self.logger.info('__result_sorting - 결과 정리 완료')
     
     def __result_push(self,job_id):
         #전역변수에 값 저장
@@ -93,6 +92,6 @@ class ImageInference:
         #리스트 초기화
         self.pointlist=[]
         self.pred_name=[]
-        self.logger.info('데이터 저장 완료')
+        self.logger.info('__result_push - 데이터 저장 완료')
     
     
