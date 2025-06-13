@@ -1,0 +1,6 @@
+# 확장자가 .pt인 모든 파일 제외
+*.pt
+
+# 특정 폴더 전체 제외
+mini_project/model/yolo11/**
+mini_project/img/**
