@@ -14,7 +14,7 @@ class ImageProcessor:
     def __recolor(self,img):
         return cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
     #이미지 저장
-    def tmp_ImageSave(self,img_byte,job_id):
+    async def tmp_ImageSave(self,img_byte,job_id):
         self.logger.info('tmp_ImageSave - 임시파일 저장')
         # uuid.uuid4()는 랜덤하고 유일한 UUID를 생성 jobid와 일치하는 이미지 받기
         tmp_filename = f'tmp_{job_id}.jpg'
@@ -25,33 +25,35 @@ class ImageProcessor:
         temp_path = folder_path / tmp_filename
         
         img_byte.file.seek(0)
+        # img_data = img_byte.file.read()
         img_data = img_byte.file.read()
         size = len(img_data)
         
-        self.logger.info(f"이미지 이름: {temp_path}")
-        self.logger.info(f"이미지 크기: {size} bytes")
+        self.logger.info(f"tmp_ImageSave - 이미지 이름: {temp_path}")
+        self.logger.info(f"tmp_ImageSave - 이미지 크기: {size} bytes")
         
         # "wb"는 바이너리 쓰기 모드 image.file: FastAPI의 UploadFile 객체가 가지고 있는 원본 파일 스트림을 복사
         with open(temp_path,"wb") as f:
             f.write(img_data)
-            self.logger.info("tmp_ImageSave - 사진 저장 완료")
+            
         #파일 경로 되돌려주기
-        return temp_path ,tmp_filename
+        self.logger.info(f"tmp_ImageSave - 사진 저장 완료 - {temp_path}")
+        return temp_path
     
-    def display_ImageSave(self,img_path,job_id,tmp_filename,w=640):
-        self.logger.info("display_ImageSave - 디스플레이 사진 저장")
+    def display_ImageSave(self,img,tmp_filename):
+        
         display_filename = str(tmp_filename).replace('tmp','display')
-        resizedimg,_,_ = self.resize(img_path)
         
         folder_path = Path.cwd() / 'img' / 'display'
         folder_path.mkdir(parents=True, exist_ok=True)  # 폴더 없으면 생성
         temp_path = folder_path / display_filename
         
-        cv2.imwrite(temp_path, resizedimg)
+        cv2.imwrite(temp_path, img)
+        self.logger.info(f"display_ImageSave - 디스플레이 사진 저장 완료 {temp_path}")
         return temp_path
     
     def resize(self, img_path,one_side_size=640):
-        self.logger.info('resize 이미지 리사이징')
+        self.logger.info(f'resize 이미지 리사이징 {img_path}')
         img = cv2.imread(str(img_path))
         hr, wr = img.shape[:2]
         if hr>wr : #세로 사진 기준으로 처리
@@ -87,10 +89,10 @@ class ImageProcessor:
         
     def redraw_mask(self,results,jobid,body):
         self.logger.info("redraw_mask - 마스킹 생성")
-        print(type(body))
+        print("받은 타입" ,type(body))
         print(body.selectedname)
         print(body)
         pid = results.get(jobid)
-        print(pid.get('poly')[body.selectedIdx[0]])
-        print(pid.get('poly'))
-        pid.get('names')
+        print('특정번호 폴리곤',pid.get('poly')[body.selectedIdx[0]])
+        print('전체 폴리',pid.get('poly'))
+        print('이름 : ',pid.get('names'))
