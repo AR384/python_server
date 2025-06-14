@@ -23,21 +23,23 @@ class ImageInference:
         self.save_file =""
         self.pointlist = []
         self.pred_name = []
+        self.viewSize = []
         
     def sequence(self,img_path,job_id):
         self.logger.info('sequence - 시퀀스 시작')
-        self.__predict(img_path,job_id)
+        self.__predict(img_path)
         self.__result_IMG_saving_coverting(img_path)
         self.__result_sorting(job_id)
         self.__result_push(job_id,)
         self.logger.info(f'Jo_id ==={job_id}')
         self.logger.info('sequence - 시퀀스 종료')
     
-    def __predict(self,img_path,job_id):
+    def __predict(self,img_path):
+        img,w,h = self.ips.resize(img_path)
+        self.viewSize = [w,h]
         results = self.model.predict(
-            img_path,
+            img,
             conf=0.5,
-            imgsz=(640,480),
             device='cuda:0',
             max_det=10,
             retina_masks=True,
@@ -87,11 +89,13 @@ class ImageInference:
             "image_base64": f"data:image/jpeg;base64,{self.b64_img}",
             "status": "done",
             "poly": self.pointlist.copy(),
-            "names":self.pred_name.copy() #리스트 복사해서 새로운 객체로 만듬
+            "names":self.pred_name.copy(), #리스트 복사해서 새로운 객체로 만듬
+            'viewSize':self.viewSize.copy()
         }
         #리스트 초기화
         self.pointlist=[]
         self.pred_name=[]
+        self.viewSize=[]
         self.logger.info('__result_push - 데이터 저장 완료')
     
     

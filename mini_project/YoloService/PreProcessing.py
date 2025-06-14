@@ -41,7 +41,7 @@ class ImageProcessor:
     def display_ImageSave(self,img_path,job_id,tmp_filename,w=640):
         self.logger.info("display_ImageSave - 디스플레이 사진 저장")
         display_filename = str(tmp_filename).replace('tmp','display')
-        resizedimg = self.resize(img_path)
+        resizedimg,_,_ = self.resize(img_path)
         
         folder_path = Path.cwd() / 'img' / 'display'
         folder_path.mkdir(parents=True, exist_ok=True)  # 폴더 없으면 생성
@@ -64,7 +64,8 @@ class ImageProcessor:
             new_height = int(hr * ratio)
             
         resized_img = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_LANCZOS4)
-        return resized_img
+        self.logger.info(f'resize -  이미지 리사이징 ={new_width,new_height}')
+        return resized_img , new_width , new_height
     
     def simplify_polygon(self,coords, tolerance=2.0):
         self.logger.info('simplify_polygon - 폴리곤 처리 ')
