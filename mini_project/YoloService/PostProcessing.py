@@ -24,5 +24,7 @@ class PostProcessing:
         else:
             self.logger.error("temp_Image_Delete - 파일을 삭제하지 못 하였습니다.")
             
-    def user_selected_img(self,results,jobid,body):
-        self.ips.redraw_mask(results,jobid,body)
+    def user_selected_img(self,resultDTO,jobid,body):
+        mask_path = self.ips.redraw_mask(resultDTO,jobid,body)
+        base64_img = self.image_to_JSON(mask_path)
+        
