@@ -12,10 +12,11 @@ class ImageUploadResponseDTO(BaseModel):
     username: str
 
 class ImageProcessResultDTO(BaseModel):
-    message:str
     image_base64:str
+    message:str
     poly:list
     names:list
+    type:list
     viewSize:list
     
 class ImagePermitResponseDTO(BaseModel):
@@ -33,5 +34,5 @@ class ImagePermitResultDTO(BaseModel):
     selectedIdx:list
     selectedname:list
     image_base64:str
-    poly:list
     viewSize:list
+    amount:list

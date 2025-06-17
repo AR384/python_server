@@ -2,7 +2,7 @@ from ultralytics import YOLO
 from ultralytics.engine.results import Results
 import cv2
 import numpy as np
-from YoloService import PostProcessing,PreProcessing
+from YoloService import PostProcessing,PreProcessing,Dummylables
 from pathlib import Path
 import os
 import logging
@@ -23,7 +23,10 @@ class ImageInference:
         self.save_file =""
         self.pointlist = []
         self.pred_name = []
+        self.pred_type = []
         self.viewSize = []
+        self.label =Dummylables.LABELS
+        self.sublabel = Dummylables.SUB_LABELS
         
     def sequence(self,job_id,tmp_filename):
         try:
@@ -35,8 +38,8 @@ class ImageInference:
             self.b64_img = self.pps.image_to_JSON(diaplay_img_path)
             self.inference_result=self.__predict(self.model,resized_img)
             self.__result_IMG_saving(diaplay_img_path,self.inference_result)
-            self.pred_name,self.pointlist = self.__result_sorting(job_id,self.results_store,self.inference_result)
-            self.__result_push(job_id,self.results_store,self.b64_img,self.pointlist,self.pred_name,self.viewSize)
+            self.pred_name,self.pred_type,self.pointlist = self.__result_sorting(job_id,self.results_store,self.inference_result)
+            self.__result_push(job_id,self.results_store,self.b64_img,self.pointlist,self.pred_name,self.pred_type,self.viewSize)
             self.__reset_state()
             self.jobState[job_id] = "done"
             self.logger.info(f'sequence -Job_id => {job_id}')
@@ -69,11 +72,13 @@ class ImageInference:
         self.logger.info(f'__result_IMG_saving -결과 이미지 저장 {save_file}')
     
     def __result_sorting(self,job_id,results_store,inference_result):
-        pred_name , point_list = [],[]
+        self.logger.info('__result_sorting - 결과 정리 시작')
+        pred_name ,pred_type, point_list = [],[],[]
         #리스트에 작업이 없을 경우 작업
         if job_id not in results_store:
             #전체 레이블 생성
-            labels = inference_result[0].names
+            # labels = inference_result[0].names #dummy label 
+            labels = self.label
             for _,result in enumerate(inference_result):
                 #인식된 레이블 리스트 플롯
                 classified_names = result.boxes.cls.cpu().numpy()
@@ -81,7 +86,17 @@ class ImageInference:
                 mask_coordinate = result.masks.xy
                 #레이블에서 값을 받아서 str 리스트로 저장
                 for i in classified_names:
-                    pred_name.append(labels[int(i)])
+                    # self.logger.info(labels.get(int(i)))
+                    if labels[int(i)] in self.sublabel: # 서브 타입
+                        subs = self.sublabel.get(labels[int(i)])
+                        ranges = len(subs)
+                        rdn = np.random.randint(0,ranges)
+                        if rdn in subs:
+                            pred_name.append(labels[int(i)]+"_"+subs.get(rdn)) #원 아이템
+                            pred_type.append(subs.get(rdn))
+                            # self.logger.info(subs.get(rdn))
+                    else:
+                        pred_name.append(labels[int(i)])
                 #레이블 별 폴리곤으로 리스트 생성
                 for poly in mask_coordinate:
                     # 과부화 걸리면 simple 폴리곤 쓸것
@@ -91,22 +106,26 @@ class ImageInference:
                     point_list.append(point_str)
                 
             self.logger.info('__result_sorting - 결과 정리 완료')
-        return pred_name , point_list
+        return pred_name,pred_type, point_list
     
-    def __result_push(self,job_id,results_store,b64_img,pointlist,pred_name,viewSize):
+    def __result_push(self,job_id,results_store,b64_img,pointlist,pred_name,pred_type,viewSize):
         #전역변수에 값 저장
+        self.logger.info('__result_push - 데이터 저장 시작')
         results_store[job_id] = {
             "image_base64": f"data:image/jpeg;base64,{b64_img}",
             "message":'추론완료',
-            "status": "done",
             "poly": pointlist.copy(),
             "names":pred_name.copy(), #리스트 복사해서 새로운 객체로 만듬
+            "type":pred_type.copy(),
             'viewSize':viewSize.copy()
         }
+        self.logger.info(results_store[job_id])
         self.logger.info('__result_push - 데이터 저장 완료')
     
     def __reset_state(self):
+        self.logger.info('__reset_state - 내부변수 초기화 시작')
         self.pointlist.clear()
         self.pred_name.clear()
+        self.pred_type.clear()
         self.viewSize.clear()
         self.logger.info('__reset_state - 내부변수 초기화 완료')

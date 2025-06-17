@@ -113,9 +113,9 @@ class ImageProcessor:
         masked_image = np.where(mask[:, :, None] == 255, img, gray_3ch)
         bitwise = cv2.bitwise_and(img,img,mask=mask)
         
-        output_dir = Path.cwd() / 'img' / 'mask'
+        output_dir = Path.cwd() / 'img' / 'permit'
         output_dir.mkdir(parents=True,exist_ok=True)
-        output_path = output_dir / f'mask_{jobid}.jpg'
+        output_path = output_dir / f'permit_{jobid}.jpg'
 
         success = cv2.imwrite(str(output_path), bitwise)
         if success:

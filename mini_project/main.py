@@ -6,11 +6,6 @@ from MyDTO import CustomDTO
 import uuid
 import logging
 
-class Recieve(BaseModel):
-    jobid: str
-    selectedIdx : list
-    selectedname : list
-
 app = FastAPI()
 resultDTO = {}
 jobState = {}
@@ -58,7 +53,7 @@ async def final_sending(jobid:str):
     logger.info("사용자 승인 이미지 처리 결과 반환")
     if jobid not in resultDTO:
         logger.info("@app.get('/final-result/jobid') - jobid not in results: 데이터를 찾을 수 없음")
-        return JSONResponse(status_code=404,content={"message":"[ FastAPI ] 작업아이디를 찾을 수 없습니다"})
-    result_data = resultDTO.pop(jobid)
+        return CustomDTO.ApiResponseDTO(status="failed",message='해당하는 jobid에 해당하는 결과가 없습니다.',data=None)
+    response_data = CustomDTO.ImagePermitResultDTO()
     logger.info(f'jobid : {jobid} 작업 종료  반환 후 메모리에서 삭제')
-    return result_data
+    return None
