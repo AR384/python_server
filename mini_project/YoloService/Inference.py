@@ -119,7 +119,7 @@ class ImageInference:
             "type":pred_type.copy(),
             'viewSize':viewSize.copy()
         }
-        self.logger.info(results_store[job_id])
+        # self.logger.info(results_store[job_id])
         self.logger.info('__result_push - 데이터 저장 완료')
     
     def __reset_state(self):

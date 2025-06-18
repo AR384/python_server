@@ -1,5 +1,5 @@
 from fastapi.responses import JSONResponse
-from fastapi import FastAPI, File, UploadFile, BackgroundTasks
+from fastapi import FastAPI, File, UploadFile, BackgroundTasks,Form
 from YoloService import Inference,PreProcessing,PostProcessing,StateHandler
 from pydantic import BaseModel
 from MyDTO import CustomDTO
@@ -22,13 +22,14 @@ sth = StateHandler.StateHandler(resultDTO,jobState)
 logger = logging.getLogger("[ APP ]" )
 
 @app.post("/fastapi/inference") #함수 인자는 뒤에 써야함
-async def inference_image(background_tasks: BackgroundTasks, image: UploadFile = File(...)):
+async def inference_image(background_tasks: BackgroundTasks, image: UploadFile = File(...),username:str = Form(...)):
     #작업아이디 발급
     jobid = str(uuid.uuid4())
+
     jobState[jobid] = "queued"
     #들어온 사진 임시저장 [원본]
     tmp_filename = await ips.tmp_ImageSave(image,jobid)
-    response_data = CustomDTO.ImageUploadResponseDTO(jobid=jobid,username='')
+    response_data = CustomDTO.ImageUploadResponseDTO(jobid=jobid,username=username)
     #비동기 백그라운드 테스크 시작
     background_tasks.add_task(inf.sequence,jobid,tmp_filename)
     return CustomDTO.ApiResponseDTO(status=jobState.get(jobid),message="Fast API 이미지 수신 완료",data=response_data)
