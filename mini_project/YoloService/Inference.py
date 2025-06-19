@@ -47,8 +47,7 @@ class ImageInference:
         except Exception as e:
             self.jobState[job_id] = 'failed'
             self.results_store[job_id] = {"status": "failed", "error": str(e)}
-            
-    
+
     def __predict(self,model,resized_img):
         self.logger.info('__predict - 예측 시작')
         results = model.predict(

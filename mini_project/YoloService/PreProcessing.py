@@ -10,9 +10,6 @@ class ImageProcessor:
     def __init__(self):
         logging.basicConfig(level=logging.INFO)
         self.logger = logging.getLogger('[ ImageProcessor ]')
-        
-    def __recolor(self,img):
-        return cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
     #이미지 저장
     async def tmp_ImageSave(self,img_byte,job_id):
         self.logger.info('tmp_ImageSave - 임시파일 저장')
@@ -87,39 +84,3 @@ class ImageProcessor:
         else:
             raise ValueError("Simplified geometry is neither Polygon nor MultiPolygon.")
         
-    def redraw_mask(self,results,jobid,body):
-        self.logger.info("redraw_mask - 마스킹 생성")
-        print(body)
-        
-        path = Path.cwd() / 'img' / 'display'
-        imgname = f'display_{jobid}.jpg'
-        imgpath = path / imgname
-        
-        img = cv2.imread(str(imgpath))
-        pid = results.get(jobid)
-        
-        height,width = img.shape[:2]
-        
-        mask = np.zeros((height, width), dtype=np.uint8)
-
-        for i in range(len(body.selectedIdx)):
-            coords_str = pid.get('poly')[body.selectedIdx[i]]
-            point = [list(map(int,p.split(','))) for p in coords_str.split()]
-            pts = np.array(point,dtype=np.int32)
-            cv2.fillPoly(mask, [pts], 255)
-            
-        gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        gray_3ch = cv2.cvtColor(gray,cv2.COLOR_GRAY2BGR)
-        masked_image = np.where(mask[:, :, None] == 255, img, gray_3ch)
-        bitwise = cv2.bitwise_and(img,img,mask=mask)
-        
-        output_dir = Path.cwd() / 'img' / 'permit'
-        output_dir.mkdir(parents=True,exist_ok=True)
-        output_path = output_dir / f'permit_{jobid}.jpg'
-
-        success = cv2.imwrite(str(output_path), bitwise)
-        if success:
-            self.logger.info(f"마스크 이미지 저장 완료: {output_path}")
-            return output_path
-        else:
-            self.logger.error(f"마스크 이미지 저장 실패: {output_path}")

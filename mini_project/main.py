@@ -9,6 +9,7 @@ import logging
 app = FastAPI()
 resultDTO = {}
 jobState = {}
+final_result = {}
 
 # 결과 저장용 임시 메모리 저장 (실제로는 Redis나 DB를 추천) 
 # 전송 next->spring->python  
@@ -17,7 +18,7 @@ jobState = {}
 logging.basicConfig(level=logging.INFO)
 ips = PreProcessing.ImageProcessor()
 inf = Inference.ImageInference(results_store=resultDTO,jobState=jobState)
-pps = PostProcessing.PostProcessing()
+pps = PostProcessing.PostProcessing(final_result)
 sth = StateHandler.StateHandler(resultDTO,jobState)
 logger = logging.getLogger("[ APP ]" )
 
@@ -38,23 +39,23 @@ async def inference_image(background_tasks: BackgroundTasks, image: UploadFile =
 async def get_result(jobid:str):
     return await sth.handle(jobid)
 
+#결제요청 누르면 처리
 @app.post('/fastapi/inference/{jobid}/permission')
 async def users_selected(jobid:str, body:CustomDTO.ImagePermitRequestDTO ,background_tasks:BackgroundTasks):
-    logger.info("사용자 승인 이미지 처리 요청 body =>",body)
+    logger.info("사용자 승인 이미지 처리 요청 body =>",body.model_dump())
     print(body.model_dump())
-    response_data = CustomDTO.ImagePermitResponseDTO(jobid=jobid,selectedIdx=body.selectedIdx,selectedname=body.selectedname)
     if jobid not in resultDTO:
-        logger.info("@app.post('/fastapi/inference/jobid/permission') jobid not in results: 데이터를 찾을 수 없음")
-        return CustomDTO.ApiResponseDTO(status='failed',message='해당하는 jobid에 해당하는 결과가 없습니다.',data=None)
+        logger.info("@app.get('/final-result/jobid') - jobid not in results: 데이터를 찾을 수 없음")
+        return CustomDTO.ApiResponseDTO(status="failed",message='해당하는 jobid에 해당하는 결과가 없습니다.',data=None)
     background_tasks.add_task(pps.user_selected_img,resultDTO,jobid,body)
-    return CustomDTO.ApiResponseDTO(status="que",message='Fast API 데이터 수신 완료', data=response_data)
+    return CustomDTO.ApiResponseDTO(status="que",message='Fast API 데이터 수신 완료', data=None)
 
+#마이페이지 진입시 처리
 @app.get('/fastapi/inference/{jobid}/permission/result')
 async def final_sending(jobid:str):
     logger.info("사용자 승인 이미지 처리 결과 반환")
     if jobid not in resultDTO:
         logger.info("@app.get('/final-result/jobid') - jobid not in results: 데이터를 찾을 수 없음")
         return CustomDTO.ApiResponseDTO(status="failed",message='해당하는 jobid에 해당하는 결과가 없습니다.',data=None)
-    response_data = CustomDTO.ImagePermitResultDTO()
-    logger.info(f'jobid : {jobid} 작업 종료  반환 후 메모리에서 삭제')
-    return None
+    
+    return CustomDTO.ApiResponseDTO(status="done",message='Fast API 데이터 수신 완료', data=final_result[jobid])
