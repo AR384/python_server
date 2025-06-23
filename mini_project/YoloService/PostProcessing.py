@@ -79,9 +79,24 @@ class PostProcessing:
             self.logger.error(f"__redraw_mask - 마스크 이미지 저장 실패: {output_path}")
     
     def user_selected_img(self,resultDTO,jobid,body):
+        self.logger.info("유저 선택 이미지 경로")
         mask_path = self.__redraw_mask(resultDTO,jobid,body)
         base64_img = self.image_to_JSON(mask_path)
         self.final_result[jobid] = {
-            'imgPath':mask_path
+            'imgPath':base64_img
         }
         self.temp_Image_Delete()
+        
+    def getImage(self,jobid):
+        self.logger.info("image_to_JSON - 이미지 JSON 변환 ")
+        root = os.getcwd()
+        folder = root+'/img/permit'
+        img_path = os.path.join(folder,jobid)
+        self.logger.info(f"image_to_JSON - 이미지 JSON 변환 {img_path} ")
+        if os.path.isfile(img_path):
+            with open(img_path,'rb') as f:
+                img_bytes = f.read()
+            b64_img = base64.b64encode(img_bytes).decode()
+        else:
+            b64_img = "이미지 파일이 삭제되 었거나 DB에 존재 하지않습니다."
+        return b64_img

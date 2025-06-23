@@ -48,14 +48,13 @@ async def users_selected(jobid:str, body:CustomDTO.ImagePermitRequestDTO ,backgr
         logger.info("@app.get('/final-result/jobid') - jobid not in results: 데이터를 찾을 수 없음")
         return CustomDTO.ApiResponseDTO(status="failed",message='해당하는 jobid에 해당하는 결과가 없습니다.',data=None)
     background_tasks.add_task(pps.user_selected_img,resultDTO,jobid,body)
-    return CustomDTO.ApiResponseDTO(status="que",message='Fast API 데이터 수신 완료', data=None)
+    filename = f'permit_{jobid}.jpg'
+    return CustomDTO.ApiResponseDTO(status="que",message='Fast API 데이터 수신 완료 마스킹이미지 경로', data={'jobid' : jobid , 'path':filename })
+
 
 #마이페이지 진입시 처리
 @app.get('/fastapi/inference/{jobid}/permission/result')
 async def final_sending(jobid:str):
-    logger.info("사용자 승인 이미지 처리 결과 반환")
-    if jobid not in resultDTO:
-        logger.info("@app.get('/final-result/jobid') - jobid not in results: 데이터를 찾을 수 없음")
-        return CustomDTO.ApiResponseDTO(status="failed",message='해당하는 jobid에 해당하는 결과가 없습니다.',data=None)
-    
-    return CustomDTO.ApiResponseDTO(status="done",message='Fast API 데이터 수신 완료', data=final_result[jobid])
+    logger.info(f"사용자 승인 이미지 처리 결과 반환 {jobid}")
+    img = pps.getImage(jobid)
+    return CustomDTO.ApiResponseDTO(status="done",message='Fast API 데이터 수신 완료', data=img)
